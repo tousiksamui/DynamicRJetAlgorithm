@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Default values
+fastjetprefix="/usr/local"
+
+# Parse command line options
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --fastjet-config=*)
+      fastjetconfig="${1#*=}"
+      #echo "$fastjetconfig"
+      fastjetprefix=`$fastjetconfig --prefix`
+      ;;
+    *)
+      echo "Unknown option: $1"
+      echo "The plugin will be installed in the $fastjetprefix directory."
+      echo "If this is not what you want, please set the --fastjet-config option correctly."
+      #exit 1
+      ;;
+  esac
+  shift
+done
+
+# Check if fastjet-config path is provided
+if [ -z "$fastjetconfig" ]; then
+  echo "Error: --fastjet-config is required. Provide the path to fastjet-config."
+  exit 1
+fi
+
+# Write the configuration to a file
+cp .Makefile.inc Makefile
+sed -i "s|fastjetprefix =.*|fastjetprefix = ${fastjetprefix}|g" Makefile
+#echo "fastjetconfig=$fastjetprefix" > config.mk
+
+echo "Configuration complete. Use 'make' to build the object files and 'make install' to install the package."
+
