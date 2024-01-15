@@ -1,7 +1,7 @@
 # Makefile for DynamicRPlugin
 
 # Specify the path to fastjet-config as an input parameter
-fastjetprefix = /home/tousik/packages/installation_dir/fastjet342
+fastjetprefix = /home/tousik/packages/installation_dir/fastjet340
 fastjetconfig = ${fastjetprefix}/bin/fastjet-config
 
 # Compiler and flags

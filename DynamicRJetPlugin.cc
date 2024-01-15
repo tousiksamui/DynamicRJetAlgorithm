@@ -20,56 +20,122 @@ using namespace std;
 FASTJET_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
 //namespace contrib{
 
-class DeltaRJetBJ {
+class DRAKBriefJet {
 public:
   void init(const PseudoJet & jet, const ExtraInfo * extraInfo){
-    _p = extraInfo->p;
-    _r = extraInfo->radius;
-    _pti = jet.pt();
-    _pti2 = _pti*_pti;
+    //_p = extraInfo->p;
+    //_pti = jet.pt();
     _jeti = jet;
+    _pti2 = jet.pt2();
     _avg_R = jet.user_info<MoreInfo>().mean_R();
     _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
-    _sd_R  = sqrt(_sd_R);
+    _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    _r = extraInfo->R0();
   }
 
-  double distance(const DeltaRJetBJ * jet) const {
+  double distance(const DRAKBriefJet * jet) const {
     double distance2 = jet->_jeti.plain_distance(_jeti);
-    double ptmax = jet->_pti2;
-    if (ptmax < _pti2) ptmax = _pti2;
-    double dij = distance2/ptmax;
-
-    return dij;
+    double pt2max = jet->_pti2;
+    if (pt2max < _pti2) pt2max = _pti2;
+    return distance2/pt2max;
+    //return dij;
   }
 
   double beam_distance() const {
-    
     double num = (_r + _sd_R);
     double diB = num * num/_pti2; 
     return diB; 
   }
 
 private:
-  int _p ;
-  double _r, _pti, _pti2 ;
+  //int _p ;
   PseudoJet _jeti;
-  double _avg_R, _sd_R;
+  double _pti2, _avg_R, _sd_R, _r;
 
 };
 
+class DRCABriefJet {
+public:
+  void init(const PseudoJet & jet, const ExtraInfo * extraInfo){
+    //_p = extraInfo->p;
+    //_pti = jet.pt();
+    _jeti = jet;
+    //_pti2 = jet.pt2();
+    _avg_R = jet.user_info<MoreInfo>().mean_R();
+    _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
+    _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    _r = extraInfo->R0();
+  }
+
+  double distance(const DRCABriefJet * jet) const {
+    double distance2 = jet->_jeti.plain_distance(_jeti);
+    //double ptmax = jet->_pti2;
+    //if (ptmax < _pti2) ptmax = _pti2;
+    return distance2;
+    //return dij;
+  }
+
+  double beam_distance() const {
+    double num = (_r + _sd_R);
+    double diB = num * num; 
+    return diB; 
+  }
+
+private:
+  //int _p ;
+  PseudoJet _jeti;
+  double _avg_R, _sd_R, _r;
+
+};
+
+class DRKTBriefJet {
+public:
+  void init(const PseudoJet & jet, const ExtraInfo * extraInfo){
+    //_p = extraInfo->p;
+    //_pti = jet.pt();
+    _jeti = jet;
+    _pti2 = jet.pt2();
+    _avg_R = jet.user_info<MoreInfo>().mean_R();
+    _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
+    _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    _r = extraInfo->R0();
+  }
+
+  double distance(const DRKTBriefJet * jet) const {
+    double distance2 = jet->_jeti.plain_distance(_jeti);
+    double pt2min = jet->_pti2;
+    if (pt2min > _pti2) pt2min = _pti2;
+    return distance2*pt2min;
+    //return dij;
+  }
+
+  double beam_distance() const {
+    double num = (_r + _sd_R);
+    double diB = num * num * _pti2; 
+    return diB; 
+  }
+
+private:
+  //int _p ;
+  PseudoJet _jeti;
+  double _pti2, _avg_R, _sd_R, _r;
+
+};
+
+
 //------------------------------------------------------------------
-// implementation of the DeltaRJet plugin
+// implementation of the DynamicRJet plugin
 //------------------------------------------------------------------
 
-bool DeltaRJetPlugin::_first_time = true;
+bool DynamicRJetPlugin::_first_time = true;
 
-string DeltaRJetPlugin::description () const {
+string DynamicRJetPlugin::description () const {
   ostringstream desc;
-  desc << "DeltaRJet algorithm with R = " << R();
+  desc << "DynamicRJet algorithm with R = " << R();
   return desc.str();
 }
 
-void DeltaRJetPlugin::run_clustering(ClusterSequence & clust_seq) const {
+void DynamicRJetPlugin::run_clustering(ClusterSequence & clust_seq) const {
 
   int njets = clust_seq.jets().size();
   int insize = njets;
@@ -80,7 +146,7 @@ void DeltaRJetPlugin::run_clustering(ClusterSequence & clust_seq) const {
   double mean_DR, rms_DR, wt;
   double mean_DR1, rms_DR1, wt1;
   double jet_i_pt, jet_j_pt;
-  double DRij;
+  double DRij, DR2ij;
   double pti, ptj;
 
   //MoreInfo minfo(0.4, 0.0, 1.0);
@@ -93,100 +159,149 @@ void DeltaRJetPlugin::run_clustering(ClusterSequence & clust_seq) const {
     //std::cout << particle.user_info<MoreInfo>().mean_R() << std::endl;
   //}
 
-  ExtraInfo extraInfo(algo_pow, radius);
-  //DeltaRJetPlugin::_actual_run_clustering<NNH<DeltaRJetBJ, ExtraInfo> >(clust_seq, &extraInfo);
+  ExtraInfo extraInfo(radius);
+  //DynamicRJetPlugin::_actual_run_clustering<NNH<DynamicRJetBJ, ExtraInfo> >(clust_seq, &extraInfo);
 
-  NNH<DeltaRJetBJ, ExtraInfo> nn(clust_seq.jets(), &extraInfo);
+  //NNH<?, ?> nn(clust_seq.jets(), ?) //&extraInfo);
+  //NNBase* nn = nullptr;
+  NNBase<ExtraInfo> *nn = nullptr ;
+
+  switch(_jet_algorithm) {
+    case DRKT_algorithm:
+      nn = new NNH<DRKTBriefJet, ExtraInfo>(clust_seq.jets(), &extraInfo);
+      break;
+    case DRCA_algorithm:
+      nn = new NNH<DRCABriefJet, ExtraInfo>(clust_seq.jets(), &extraInfo);
+      break;
+    case DRAK_algorithm:
+      nn = new NNH<DRAKBriefJet, ExtraInfo>(clust_seq.jets(), &extraInfo);
+      break;
+    default:
+      throw Error("unrecognized jet_algorithm");
+  }
 
   while (njets > 0) {
     int i, j, k;
-    double dij = nn.dij_min(i, j);
+    double dij = nn->dij_min(i, j);
     if (j >= 0) {
       jet_i  = clust_seq.jets()[i];
       jet_j  = clust_seq.jets()[j];
-
-      jet_i_pt = jet_i.pt();
-      jet_j_pt = jet_j.pt();
       
       //newjet_constituents.resize(0);
       //vector<PseudoJet> newjet_constituents = clust_seq.jets()[i].constituents() 
       //newjet_constituents.insert(newjet_constituents.end(), clust_seq.jets()[j].constituents());
       if (i < insize && j < insize) {
-        mean_DR = jet_i.delta_R(jet_j);
-	rms_DR = mean_DR*mean_DR;
-	wt = jet_i_pt*jet_j_pt;
+        jet_i_pt = jet_i.pt();
+        jet_j_pt = jet_j.pt();
+        rms_DR = jet_i.plain_distance(jet_j);
+        //mean_DR = jet_i.delta_R(jet_j);
+        //rms_DR = mean_DR*mean_DR;
+        mean_DR = sqrt(rms_DR);
+        wt = jet_i_pt*jet_j_pt;
       }
       else if ( i < insize && j >= insize) {
-	mean_DR = 0;
-	rms_DR  = 0;
-	wt      = 0;
-	for (unsigned int jt=0; jt < jet_j.constituents().size(); jt++){
-          DRij = jet_i.delta_R(jet_j.constituents()[jt]);
-	  ptj  = jet_j.constituents()[jt].pt();
-          mean_DR += DRij*ptj;
-	  rms_DR  += DRij*DRij*ptj;
-	  wt      += ptj;
+        jet_i_pt = jet_i.pt();
+        //jet_j_pt = jet_j.pt();
+        mean_DR = 0;
+        rms_DR  = 0;
+        wt      = 0;
+        vector<PseudoJet> jet_j_constituents = jet_j.constituents();
+        for (unsigned int jt=0; jt < jet_j_constituents.size(); jt++){
+          DR2ij = jet_i.plain_distance(jet_j_constituents[jt]);
+          //DRij = jet_i.delta_R(jet_j.constituents()[jt]);
+          //DRij = sqrt(DR2ij);
+          ptj  = jet_j_constituents[jt].pt();
+          rms_DR  += DR2ij*ptj;
+          mean_DR += sqrt(DR2ij)*ptj;
+          wt      += ptj;
         }
-	mean_DR = mean_DR*jet_i_pt;
-	rms_DR  = rms_DR *jet_i_pt;
-	wt      = wt     *jet_i_pt;
+        mean_DR = mean_DR*jet_i_pt;
+        rms_DR  = rms_DR *jet_i_pt;
+        wt      = wt     *jet_i_pt;
 
-	mean_DR = (mean_DR + jet_j.user_info<MoreInfo>().mean_R()*jet_j.user_info<MoreInfo>().wt())/(wt+jet_j.user_info<MoreInfo>().wt());
-	rms_DR  = (rms_DR + jet_j.user_info<MoreInfo>().rms_R()*jet_j.user_info<MoreInfo>().wt())/(wt+jet_j.user_info<MoreInfo>().wt());
-	wt      = wt + jet_j.user_info<MoreInfo>().wt();
+        wt      = wt + jet_j.user_info<MoreInfo>().wt();
+        mean_DR = (mean_DR + jet_j.user_info<MoreInfo>().mean_R()*jet_j.user_info<MoreInfo>().wt())/wt;
+        rms_DR  = (rms_DR + jet_j.user_info<MoreInfo>().rms_R()*jet_j.user_info<MoreInfo>().wt())/wt;
       }
       else if ( i >= insize && j < insize) {
-	mean_DR = 0;
-	rms_DR  = 0;
-	wt      = 0;
-	for (unsigned int it=0; it < jet_i.constituents().size(); it++){
-          DRij = jet_j.delta_R(jet_i.constituents()[it]);
-	  pti  = jet_i.constituents()[it].pt();
-          mean_DR += DRij*pti;
-	  rms_DR  += DRij*DRij*pti;
-	  wt      += pti;
+        //jet_i_pt = jet_i.pt();
+        jet_j_pt = jet_j.pt();
+        mean_DR = 0;
+        rms_DR  = 0;
+        wt      = 0;
+        vector<PseudoJet> jet_i_constituents = jet_i.constituents();
+        for (unsigned int it=0; it < jet_i_constituents.size(); it++){
+          DR2ij = jet_j.plain_distance(jet_i_constituents[it]);
+          //DRij = jet_j.delta_R(jet_i.constituents()[it]);
+          pti  = jet_i_constituents[it].pt();
+          rms_DR  += DR2ij*pti;
+          mean_DR += sqrt(DR2ij)*pti;
+          wt      += pti;
         }
-	mean_DR = mean_DR*jet_j_pt;
-	rms_DR  = rms_DR *jet_j_pt;
-	wt      = wt     *jet_j_pt;
+        mean_DR = mean_DR*jet_j_pt;
+        rms_DR  = rms_DR *jet_j_pt;
+        wt      = wt     *jet_j_pt;
 
-	mean_DR = (mean_DR + jet_i.user_info<MoreInfo>().mean_R()*jet_i.user_info<MoreInfo>().wt())/(wt+jet_i.user_info<MoreInfo>().wt());
-	rms_DR  = (rms_DR + jet_i.user_info<MoreInfo>().rms_R()*jet_i.user_info<MoreInfo>().wt())/(wt+jet_i.user_info<MoreInfo>().wt());
-	wt      = wt + jet_i.user_info<MoreInfo>().wt();
+        wt      = wt + jet_i.user_info<MoreInfo>().wt();
+        mean_DR = (mean_DR + jet_i.user_info<MoreInfo>().mean_R()*jet_i.user_info<MoreInfo>().wt())/wt;
+        rms_DR  = (rms_DR + jet_i.user_info<MoreInfo>().rms_R()*jet_i.user_info<MoreInfo>().wt())/wt;
       }
       else  {
-	mean_DR = 0;
-	rms_DR  = 0;
-	wt      = 0;
-	for (unsigned int it=0; it < jet_i.constituents().size(); it++){
-	  pti  = jet_i.constituents()[it].pt();
-	  mean_DR1 = 0;
-	  rms_DR1  = 0;
-	  wt1      = 0;
-	  for (unsigned int jt=0; jt < jet_j.constituents().size(); jt++) {
-            DRij = jet_i.constituents()[it].delta_R(jet_j.constituents()[jt]);
-	    ptj  = jet_j.constituents()[jt].pt();
-            mean_DR1 += DRij*ptj;
-	    rms_DR1  += DRij*DRij*ptj;
-	    wt1      += ptj;
-	  }
-	  mean_DR = mean_DR + mean_DR1*pti;
-	  rms_DR  = rms_DR  + rms_DR1 *pti;
-	  wt      = wt      + wt1     *pti;
+        mean_DR = 0;
+        rms_DR  = 0;
+        wt      = 0;
+        vector<PseudoJet> jet_i_constituents = jet_i.constituents();
+        vector<PseudoJet> jet_j_constituents = jet_j.constituents();
+        vector<double> ptjs, ptis;
+        ptjs.clear();
+        ptis.clear();
+
+        double wti = 0;
+        double wtj = 0;
+
+        for (unsigned int it=0; it < jet_i_constituents.size(); it++){
+          pti  = jet_i_constituents[it].pt();
+          wti = wti + pti;
+          ptis.push_back(pti);
         }
 
-	mean_DR = (mean_DR + jet_i.user_info<MoreInfo>().mean_R()*jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().mean_R()*jet_j.user_info<MoreInfo>().wt())/(wt + jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().wt());
-	rms_DR  = (rms_DR + jet_i.user_info<MoreInfo>().rms_R()*jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().rms_R()*jet_j.user_info<MoreInfo>().wt())/(wt + jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().wt());
-	wt      = wt + jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().wt();
+        for (unsigned int jt=0; jt < jet_j_constituents.size(); jt++){
+          ptj  = jet_j_constituents[jt].pt();
+          wtj = wtj + ptj;
+          ptjs.push_back(ptj);
+        }
+
+        for (unsigned int it=0; it < jet_i_constituents.size(); it++){
+          mean_DR1 = 0;
+          rms_DR1  = 0;
+          //wt1      = 0;
+          for (unsigned int jt=0; jt < jet_j_constituents.size(); jt++) {
+            DR2ij = jet_i_constituents[it].plain_distance(jet_j_constituents[jt]);
+            //DRij = jet_i.constituents()[it].delta_R(jet_j.constituents()[jt]);
+            //ptj  = jet_j.constituents()[jt].pt();
+            rms_DR1  += DR2ij*ptjs[jt];
+            mean_DR1 += sqrt(DR2ij)*ptjs[jt];
+            //wt1      += ptj;
+          }
+          mean_DR = mean_DR + mean_DR1*ptis[it];
+          rms_DR  = rms_DR  + rms_DR1 *ptis[it];
+          //wt      = wt      + wt1     *pti;
+        }
+
+        wt = wti*wtj + jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().wt();
+        mean_DR = (mean_DR + jet_i.user_info<MoreInfo>().mean_R()*jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().mean_R()*jet_j.user_info<MoreInfo>().wt())/wt;
+        rms_DR  = (rms_DR + jet_i.user_info<MoreInfo>().rms_R()*jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().rms_R()*jet_j.user_info<MoreInfo>().wt())/wt;
+        //wt      = wt + jet_i.user_info<MoreInfo>().wt() + jet_j.user_info<MoreInfo>().wt();
       }
+
       newjet = jet_i + jet_j;
       newjet.set_user_info(new MoreInfo(mean_DR, rms_DR, wt));
       clust_seq.plugin_record_ij_recombination(i, j, dij, newjet, k);
-      nn.merge_jets(i, j, clust_seq.jets()[k], k);
+      nn->merge_jets(i, j, clust_seq.jets()[k], k);
     }
     else {
       clust_seq.plugin_record_iB_recombination(i, dij);
-      nn.remove_jet(i);
+      nn->remove_jet(i);
     }
     njets--;
   }
@@ -194,7 +309,7 @@ void DeltaRJetPlugin::run_clustering(ClusterSequence & clust_seq) const {
 }
 
 // print a banner for reference to the 3rd-party code
-void DeltaRJetPlugin::_print_banner(ostream *ostr) const{
+void DynamicRJetPlugin::_print_banner(ostream *ostr) const{
   if (! _first_time) return;
   _first_time=false;
 
@@ -202,9 +317,10 @@ void DeltaRJetPlugin::_print_banner(ostream *ostr) const{
   if (!ostr) return;  
 
   (*ostr) << "#-------------------------------------------------------------------------" << endl;
-  (*ostr) << "# You are running the TrackJet plugin for FastJet. It is based on         " << endl;
-  (*ostr) << "# the implementation by Andy Buckley and Manuel Bahr that is to be        " << endl;
-  (*ostr) << "# found in Rivet 1.1.2. See http://www.hepforge.org/downloads/rivet.      " << endl;
+  (*ostr) << "# You are running the Dyanamic Radius Jet Clustering Algorithm. It is     " << endl;
+  (*ostr) << "# impleted within the framework of FastJet3. Please cite the FastJet3     " << endl;
+  (*ostr) << "# references. It is based on arXiv:2301.13074. This implementation is     " << endl;
+  (*ostr) << "# done by Tousik Samui.                                                   " << endl;
   (*ostr) << "#-------------------------------------------------------------------------" << endl;
 
   // make sure we really have the output done.
