@@ -35,7 +35,7 @@ Please use this alternative if path for FastJet is not set but installation dire
 - DynamicRJetPlugin.hh and libDynamicRPlugin.so will be installed within the FastJet installation path.
 - The usage is the same as the standard FastJet package.
 - To use this plugin, please use the `-lDynamicRPlugin` flag.
-- Check the example directory for more examples.
+- Check the examples directory for more examples.
 
 
 ### Note
