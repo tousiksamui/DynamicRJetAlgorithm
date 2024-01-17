@@ -20,6 +20,7 @@ Please use this alternative if write permission is not set but the user has sudo
   $ ./configure --fastjet-config=fastjet-config
   $ make
   $ sudo make install
+  ```
 
 ### Alternative 3.
 Please use this alternative if path for FastJet is not set but installation directory of FastJet is known (e.g., /path/to/fastjet/bin/). Check whether `/path/to/fastjet/bin/fastjet-config --help` command is executed properly.
