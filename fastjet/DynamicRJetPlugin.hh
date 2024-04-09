@@ -112,7 +112,7 @@ private:
 
   static bool _first_time;
 
-  //template<class N> void _actual_run_clustering(ClusterSequence &, ExtraInfo *) const;
+  template<class BJ> void actual_run(ClusterSequence &) const;
 
   /// print a banner for reference to the 3rd-party code
   void _print_banner(std::ostream *ostr) const;

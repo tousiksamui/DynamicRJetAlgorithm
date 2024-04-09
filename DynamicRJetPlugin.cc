@@ -132,12 +132,29 @@ string DynamicRJetPlugin::description () const {
   return desc.str();
 }
 
+
+
 void DynamicRJetPlugin::run_clustering(ClusterSequence & clust_seq) const {
+
+  switch(_jet_algorithm) {
+    case DRKT_algorithm:
+      actual_run<DRKTBriefJet>(clust_seq);
+      break;
+    case DRCA_algorithm:
+      actual_run<DRCABriefJet>(clust_seq);
+      break;
+    case DRAK_algorithm:
+      actual_run<DRAKBriefJet>(clust_seq);
+      break;
+    default:
+      throw Error("unrecognized jet_algorithm");
+  }
+}
+
+template<class BJ> void DynamicRJetPlugin::actual_run(ClusterSequence & clust_seq) const {
 
   int njets = clust_seq.jets().size();
   int insize = njets;
-  int algo_pow  = algorithm();
-  double radius = R();
   PseudoJet newjet, jet_i, jet_j;
   double mean_DR, rms_DR, wt;
   double mean_DR1, rms_DR1, wt1;
@@ -145,27 +162,18 @@ void DynamicRJetPlugin::run_clustering(ClusterSequence & clust_seq) const {
   double DRij, DR2ij;
   double pti, ptj;
 
+  double radius = R();
   ExtraInfo extraInfo(radius);
 
-  NNBase<ExtraInfo> *nn = nullptr ;
+  NNH<BJ, ExtraInfo> nn(clust_seq.jets(), &extraInfo);
+  //NNBase<ExtraInfo> *nn = nullptr ;
+  //NNHInfo<ExtraInfo> *nn = nullptr ;
+  //NNH<BJ, ExtraInfo> *nn = nullptr;
 
-  switch(_jet_algorithm) {
-    case DRKT_algorithm:
-      nn = new NNH<DRKTBriefJet, ExtraInfo>(clust_seq.jets(), &extraInfo);
-      break;
-    case DRCA_algorithm:
-      nn = new NNH<DRCABriefJet, ExtraInfo>(clust_seq.jets(), &extraInfo);
-      break;
-    case DRAK_algorithm:
-      nn = new NNH<DRAKBriefJet, ExtraInfo>(clust_seq.jets(), &extraInfo);
-      break;
-    default:
-      throw Error("unrecognized jet_algorithm");
-  }
 
   while (njets > 0) {
     int i, j, k;
-    double dij = nn->dij_min(i, j);
+    double dij = nn.dij_min(i, j);
     if (j >= 0) {
       jet_i  = clust_seq.jets()[i];
       jet_j  = clust_seq.jets()[j];
@@ -264,11 +272,11 @@ void DynamicRJetPlugin::run_clustering(ClusterSequence & clust_seq) const {
       newjet = jet_i + jet_j;
       newjet.set_user_info(new MoreInfo(mean_DR, rms_DR, wt));
       clust_seq.plugin_record_ij_recombination(i, j, dij, newjet, k);
-      nn->merge_jets(i, j, clust_seq.jets()[k], k);
+      nn.merge_jets(i, j, clust_seq.jets()[k], k);
     }
     else {
       clust_seq.plugin_record_iB_recombination(i, dij);
-      nn->remove_jet(i);
+      nn.remove_jet(i);
     }
     njets--;
   }
