@@ -3,7 +3,7 @@
 #####################################
 
 ### Prerequisite
-- FastJet >= 3.3.2
+- FastJet >= 3.1.0
   (Please see [FastJet](https://fastjet.fr/) for FastJet installation)
 
 ### Alternative 1.
