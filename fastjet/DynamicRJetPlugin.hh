@@ -22,10 +22,8 @@ class PseudoJet;
 class ExtraInfo {
   public:
   ExtraInfo (double radin) {
-    //p        = pin;
     _r0   = radin;
   }
-  //int p;
   double R0() const {return _r0;}
 
   private:
@@ -51,20 +49,12 @@ class MoreInfo: public PseudoJet::UserInfoBase {
 
 
 enum DynamicRJetAlgorithm {
-  //kt_algorithm=0,
-  //DRKT=kt_algorithm,
   DRKT_algorithm = 0,
   KTlike=DRKT_algorithm,
 
-  //cambridge_algorithm=1,
-  //aachen_algorithm=cambridge_algorithm,
-  //cambridge_aachen_algorithm=cambridge_algorithm,
-  //DRCA=cambridge_algorithm,
   DRCA_algorithm = 1,
   CAlike=DRCA_algorithm,
 
-  //antikt_algorithm=2,
-  //DRAK=antikt_algorithm,
   DRAK_algorithm = 2,
   AKlike=DRAK_algorithm
 };
@@ -81,7 +71,6 @@ public:
   ///
   DynamicRJetPlugin (double radius, DynamicRJetAlgorithm jet_algorithm_in=DRAK_algorithm,
 		  RecombinationScheme jet_recombination_scheme=E_scheme){
-    //_p       = p;
     _radius  = radius;
     _radius2 = radius*radius;
     _jet_algorithm = jet_algorithm_in;
@@ -103,7 +92,6 @@ public:
   virtual DynamicRJetAlgorithm  algorithm() const {return _jet_algorithm;}
 
 private:
-  //int _p;
   double _radius, _radius2;
 
   DynamicRJetAlgorithm _jet_algorithm;

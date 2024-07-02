@@ -1,5 +1,6 @@
 //---------------------------------------------------------------------
-// file: example01.cc
+// file: 02-jetarea-voronoi.cc
+// run:  ./run02.sh
 // run it with sample.dat
 //---------------------------------------------------------------------
 #include <iostream>
@@ -8,6 +9,7 @@
 #include <iomanip>
 #include "fastjet/JetDefinition.hh"
 #include "fastjet/ClusterSequence.hh"
+#include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/DynamicRJetPlugin.hh"
 
 // Header and Namespace.
@@ -21,7 +23,7 @@ int main() {
 
   infile.open(filepath);
 
-  // No. of events to generate.
+  // No. of events.
   int nEvent = 10 ;
 
   // FastJet parameters
@@ -32,16 +34,12 @@ int main() {
   vector<PseudoJet> particles;
 
   // some useful variables
-  double part_pt2;
   double Rd;
   double px, py, pz, e;
 
   // Loop over events 
   for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
 
-    cout << "############################################################" << endl;
-    cout << "Event # " << iEvent+1 << "." << endl;
-    cout << "------------------------------------------------------------" << endl;
     particles.resize(0);
 
     // Loop over event record
@@ -50,34 +48,45 @@ int main() {
       if (e < 0.0) break;
       // construct the particle PseudoJet
       PseudoJet particle(px, py, pz, e);
-      part_pt2 = px*px + py*py;
-      particle.set_user_info(new MoreInfo(0.0, 0.0, part_pt2));
+
       particles.push_back(particle);
     }
 
     // continue to next event if no final state particle.
     if (int(particles.size())==0) continue; 
 
+    AreaDefinition area_def(voronoi_area);
+
     // DR-AK algorithm
     DRAK DRAKJP(radius);
     JetDefinition jet_def_DRAK(&DRAKJP);
-    ClusterSequence cs_DRAK(particles, jet_def_DRAK);
+
+    ClusterSequenceArea cs_DRAK(particles, jet_def_DRAK, area_def);
+
     vector<PseudoJet> DRAKjets = sorted_by_pt(cs_DRAK.inclusive_jets(pTjetMin));
 
+    cout << "############################################################" << endl;
+    cout << "Event # " << iEvent+1 << "." << endl;
+    cout << "------------------------------------------------------------" << endl;
+
     cout << "Output of " << jet_def_DRAK.description() << "." << endl;
-    //printf("%5s %15s %15s %15s\n","jet #", "rapidity", "phi", "pt");
-    cout << setw(5) << right << "jet #" << setw(10) << right << "rapidity" << setw(10) << right << "phi" << setw(15) << right << "pt (GeV)" << setw(10) << right << "Rd" << endl; 
+    cout << setw(5) << right << "jet #" << setw(10) << right << "rapidity" << setw(10) << right << "phi" << setw(15) << right << "pt (GeV)" << setw(10) << right << "Rd" << setw(22) << right << "jet area (Voronoi)" << endl; 
 
     for (int iD = 0; iD < DRAKjets.size(); iD++) {
-      Rd = DRAKjets[iD].user_info<MoreInfo>().mean_R();
-      Rd = DRAKjets[iD].user_info<MoreInfo>().rms_R() - Rd*Rd;
-      Rd = (Rd > 0.0) ? radius+sqrt(Rd) : radius-sqrt(-Rd);
+      Rd = radius;
+      if (DRAKjets[iD].has_user_info<MoreInfo>()) {
+        Rd = DRAKjets[iD].user_info<MoreInfo>().mean_R();
+        Rd = DRAKjets[iD].user_info<MoreInfo>().rms_R() - Rd*Rd;
+        Rd = (Rd > 0.0) ? radius+sqrt(Rd) : radius-sqrt(-Rd);
+      }
+      double jet_area = DRAKjets[iD].area();
 
       cout << setw(5) << right << iD+1;
       cout << setw(10) << right << fixed << setprecision(2) << DRAKjets[iD].rap();
       cout << setw(10) << right << fixed << setprecision(2) << DRAKjets[iD].phi();
       cout << setw(15) << right << fixed << setprecision(2) << DRAKjets[iD].pt();
-      cout << setw(10) << right << fixed << setprecision(2) << Rd << endl;
+      cout << setw(10) << right << fixed << setprecision(2) << Rd;
+      cout << setw(16) << right << fixed << setprecision(2) << jet_area << endl;
     }
     cout << "------------------------------------------------------------" << endl;
     cout << endl;
@@ -85,23 +94,28 @@ int main() {
     // DR-CA algorithm
     DRCA DRCAJP(radius);
     JetDefinition jet_def_DRCA(&DRCAJP);
-    ClusterSequence cs_DRCA(particles, jet_def_DRCA);
+
+    ClusterSequenceArea cs_DRCA(particles, jet_def_DRCA, area_def);
     vector<PseudoJet> DRCAjets = sorted_by_pt(cs_DRCA.inclusive_jets(pTjetMin));
 
     cout << "Output of " << jet_def_DRCA.description() << "." << endl;
-    //printf("%5s %15s %15s %15s\n","jet #", "rapidity", "phi", "pt");
-    cout << setw(5) << right << "jet #" << setw(10) << right << "rapidity" << setw(10) << right << "phi" << setw(15) << right << "pt (GeV)" << setw(10) << right << "Rd" << endl; 
+    cout << setw(5) << right << "jet #" << setw(10) << right << "rapidity" << setw(10) << right << "phi" << setw(15) << right << "pt (GeV)" << setw(10) << right << "Rd" << setw(22) << right << "jet area (Voronoi)" << endl; 
 
     for (int iD = 0; iD < DRCAjets.size(); iD++) {
-      Rd = DRCAjets[iD].user_info<MoreInfo>().mean_R();
-      Rd = DRCAjets[iD].user_info<MoreInfo>().rms_R() - Rd*Rd;
-      Rd = (Rd > 0.0) ? radius+sqrt(Rd) : radius-sqrt(-Rd);
+      Rd = radius;
+      if (DRCAjets[iD].has_user_info<MoreInfo>()) {
+        Rd = DRCAjets[iD].user_info<MoreInfo>().mean_R();
+        Rd = DRCAjets[iD].user_info<MoreInfo>().rms_R() - Rd*Rd;
+        Rd = (Rd > 0.0) ? radius+sqrt(Rd) : radius-sqrt(-Rd);
+      }
+      double jet_area = DRCAjets[iD].area();
 
       cout << setw(5) << right << iD+1;
       cout << setw(10) << right << fixed << setprecision(2) << DRCAjets[iD].rap();
       cout << setw(10) << right << fixed << setprecision(2) << DRCAjets[iD].phi();
       cout << setw(15) << right << fixed << setprecision(2) << DRCAjets[iD].pt();
-      cout << setw(10) << right << fixed << setprecision(2) << Rd << endl;
+      cout << setw(10) << right << fixed << setprecision(2) << Rd;
+      cout << setw(16) << right << fixed << setprecision(2) << jet_area << endl;
     }
     cout << "------------------------------------------------------------" << endl;
     cout << endl;
@@ -109,23 +123,28 @@ int main() {
     // DR-KT algorithm
     DRKT DRKTJP(radius);
     JetDefinition jet_def_DRKT(&DRKTJP);
-    ClusterSequence cs_DRKT(particles, jet_def_DRKT);
+
+    ClusterSequenceArea cs_DRKT(particles, jet_def_DRKT, area_def);
     vector<PseudoJet> DRKTjets = sorted_by_pt(cs_DRKT.inclusive_jets(pTjetMin));
 
     cout << "Output of " << jet_def_DRKT.description() << "." << endl;
-    //printf("%5s %15s %15s %15s\n","jet #", "rapidity", "phi", "pt");
-    cout << setw(5) << right << "jet #" << setw(10) << right << "rapidity" << setw(10) << right << "phi" << setw(15) << right << "pt (GeV)" << setw(10) << right << "Rd" << endl; 
+    cout << setw(5) << right << "jet #" << setw(10) << right << "rapidity" << setw(10) << right << "phi" << setw(15) << right << "pt (GeV)" << setw(10) << right << "Rd" << setw(22) << right << "jet area (Voronoi)" << endl; 
 
     for (int iD = 0; iD < DRKTjets.size(); iD++) {
-      Rd = DRKTjets[iD].user_info<MoreInfo>().mean_R();
-      Rd = DRKTjets[iD].user_info<MoreInfo>().rms_R() - Rd*Rd;
-      Rd = (Rd > 0.0) ? radius+sqrt(Rd) : radius-sqrt(-Rd);
+      Rd = radius;
+      if (DRKTjets[iD].has_user_info<MoreInfo>()) {
+        Rd = DRKTjets[iD].user_info<MoreInfo>().mean_R();
+        Rd = DRKTjets[iD].user_info<MoreInfo>().rms_R() - Rd*Rd;
+        Rd = (Rd > 0.0) ? radius+sqrt(Rd) : radius-sqrt(-Rd);
+      }
+      double jet_area = DRKTjets[iD].area();
 
       cout << setw(5) << right << iD+1;
       cout << setw(10) << right << fixed << setprecision(2) << DRKTjets[iD].rap();
       cout << setw(10) << right << fixed << setprecision(2) << DRKTjets[iD].phi();
       cout << setw(15) << right << fixed << setprecision(2) << DRKTjets[iD].pt();
-      cout << setw(10) << right << fixed << setprecision(2) << Rd << endl;
+      cout << setw(10) << right << fixed << setprecision(2) << Rd;
+      cout << setw(16) << right << fixed << setprecision(2) << jet_area << endl;
     }
     cout << "------------------------------------------------------------" << endl;
     cout << endl;

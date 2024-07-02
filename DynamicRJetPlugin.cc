@@ -19,13 +19,17 @@ FASTJET_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
 class DRAKBriefJet {
 public:
   void init(const PseudoJet & jet, const ExtraInfo * extraInfo){
-    //_p = extraInfo->p;
-    //_pti = jet.pt();
     _jeti = jet;
     _pti2 = jet.pt2();
-    _avg_R = jet.user_info<MoreInfo>().mean_R();
-    _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
-    _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    if (jet.has_user_info<MoreInfo>() ) {
+      _avg_R = jet.user_info<MoreInfo>().mean_R();
+      _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
+      _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    }
+    else {
+      _avg_R = 0.0;
+      _sd_R  = 0.0;
+    }
     _r = extraInfo->R0();
   }
 
@@ -34,7 +38,6 @@ public:
     double pt2max = jet->_pti2;
     if (pt2max < _pti2) pt2max = _pti2;
     return distance2/pt2max;
-    //return dij;
   }
 
   double beam_distance() const {
@@ -53,9 +56,15 @@ class DRCABriefJet {
 public:
   void init(const PseudoJet & jet, const ExtraInfo * extraInfo){
     _jeti = jet;
-    _avg_R = jet.user_info<MoreInfo>().mean_R();
-    _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
-    _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    if (jet.has_user_info<MoreInfo>()) {
+      _avg_R = jet.user_info<MoreInfo>().mean_R();
+      _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
+      _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    }
+    else {
+      _avg_R = 0.0;
+      _sd_R  = 0.0;
+    }
     _r = extraInfo->R0();
   }
 
@@ -81,9 +90,15 @@ public:
   void init(const PseudoJet & jet, const ExtraInfo * extraInfo){
     _jeti = jet;
     _pti2 = jet.pt2();
-    _avg_R = jet.user_info<MoreInfo>().mean_R();
-    _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
-    _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    if (jet.has_user_info<MoreInfo>()) {
+      _avg_R = jet.user_info<MoreInfo>().mean_R();
+      _sd_R  = jet.user_info<MoreInfo>().rms_R() - _avg_R * _avg_R;
+      _sd_R  = (_sd_R > 0.0) ? sqrt(_sd_R) : -sqrt(-_sd_R);
+    }
+    else {
+      _avg_R = 0.0;
+      _sd_R  = 0.0;
+    }
     _r = extraInfo->R0();
   }
 
@@ -166,10 +181,6 @@ template<class BJ> void DynamicRJetPlugin::actual_run(ClusterSequence & clust_se
   ExtraInfo extraInfo(radius);
 
   NNH<BJ, ExtraInfo> nn(clust_seq.jets(), &extraInfo);
-  //NNBase<ExtraInfo> *nn = nullptr ;
-  //NNHInfo<ExtraInfo> *nn = nullptr ;
-  //NNH<BJ, ExtraInfo> *nn = nullptr;
-
 
   while (njets > 0) {
     int i, j, k;
@@ -270,7 +281,10 @@ template<class BJ> void DynamicRJetPlugin::actual_run(ClusterSequence & clust_se
       }
 
       newjet = jet_i + jet_j;
-      newjet.set_user_info(new MoreInfo(mean_DR, rms_DR, wt));
+
+      std::unique_ptr<MoreInfo> userInfo(new MoreInfo(mean_DR, rms_DR, wt));
+      newjet.set_user_info(userInfo.release());
+
       clust_seq.plugin_record_ij_recombination(i, j, dij, newjet, k);
       nn.merge_jets(i, j, clust_seq.jets()[k], k);
     }

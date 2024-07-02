@@ -2,7 +2,7 @@
 FASTJET_CONFIG="fastjet-config" # if fastjet path is not set, use full path: /path/to/fastjet/bin/fastjet-config
 FASTJET_FLAGS=`$FASTJET_CONFIG --cxxflags --libs --plugins=yes`
 
-file=01-basic
+file=02-jetarea-voronoi
 
 if [ -f $file ]
 then
