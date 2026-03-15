@@ -306,10 +306,20 @@ void DynamicRJetPlugin::_print_banner(ostream *ostr) const{
   if (!ostr) return;  
 
   (*ostr) << "#-------------------------------------------------------------------------" << endl;
-  (*ostr) << "# You are running the Dyanamic Radius Jet Clustering Algorithm. It is     " << endl;
-  (*ostr) << "# impleted within the framework of FastJet3. Please cite the FastJet3     " << endl;
-  (*ostr) << "# references. It is based on arXiv:2301.13074. This implementation is     " << endl;
-  (*ostr) << "# done by Tousik Samui.                                                   " << endl;
+  (*ostr) << "# You are running the Dynamic Radius Jet Clustering Algorithm.            " << endl;
+  (*ostr) << "# This implementation is built within the FastJet3 framework.             " << endl;
+  (*ostr) << "# Please cite the FastJet3 references when using this software.           " << endl;
+  (*ostr) << "#                                                                         " << endl;
+  (*ostr) << "# If you use this algorithm, please cite:                                 " << endl;
+  (*ostr) << "# B. Mukhopadhyaya, T. Samui, R. K. Singh                                 " << endl;
+  (*ostr) << "# Dynamic Radius Jet Clustering Algorithm                                 " << endl;
+  (*ostr) << "# JHEP 04 (2023) 019                                                      " << endl;
+  (*ostr) << "# DOI: 10.1007/JHEP04(2023)019                                            " << endl;
+  (*ostr) << "# arXiv:2301.13074                                                        " << endl;
+  (*ostr) << "# Repository: https://github.com/tousiksamui/DynamicRJetAlgorithm /       " << endl;
+  (*ostr) << "#                                                                         " << endl;
+  (*ostr) << "# Additional studies using this algorithm are listed in the repository    " << endl;
+  (*ostr) << "# README.md, CITATION.cff, CITATION.bib files.                            " << endl;
   (*ostr) << "#-------------------------------------------------------------------------" << endl;
 
   // make sure we really have the output done.

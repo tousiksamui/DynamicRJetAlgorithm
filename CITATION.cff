@@ -1,0 +1,83 @@
+cff-version: 1.2.0
+message: "If you use the Dynamic Radius Jet Clustering Algorithm implemented in this repository, please cite the following works."
+preferred-citation:
+  - type: article
+    authors:
+      - family-names: Mukhopadhyaya
+        given-names: Biswarup
+      - family-names: Samui
+        given-names: Tousik
+      - family-names: Singh
+        given-names: Ritesh K.
+    title: "Dynamic Radius Jet Clustering Algorithm"
+    journal: "Journal of High Energy Physics"
+    year: 2023
+    volume: 4
+    pages: 019
+    doi: 10.1007/JHEP04(2023)019
+
+  - type: software
+    title: "Dynamic Radius Jet Clustering Algorithm"
+    authors:
+      - family-names: Mukhopadhyaya
+        given-names: Biswarup
+      - family-names: Samui
+        given-names: Tousik
+      - family-names: Singh
+        given-names: Ritesh K.
+    repository-code: https://github.com/tousiksamui/DynamicRJetAlgorithm
+
+references:
+  - type: article
+    authors:
+      - family-names: Ghosh
+        given-names: Anupam
+      - family-names: Ghosh
+        given-names: Soumyadip
+      - family-names: Mitra
+        given-names: Soureek
+      - family-names: Samui
+        given-names: Tousik
+      - family-names: Singh
+        given-names: Ritesh K.
+    title: "Improving Sensitivity of Vectorlike Top Partner Searches with Jet Substructure"
+    journal: "Physical Review D"
+    year: 2026
+    volume: 113
+    pages: 035034
+    doi: 10.1103/dhs6-gcn9
+
+  - type: article
+    authors:
+      - family-names: Mukhopadhyaya
+        given-names: Biswarup
+      - family-names: Samanta
+        given-names: Sirshendu
+      - family-names: Samui
+        given-names: Tousik
+      - family-names: Singh
+        given-names: Ritesh K.
+    title: "Improving probes of hAA coupling in the Type-X two Higgs doublet model scenario: The crucial role of tau-jet charge identification"
+    journal: "Physics Letters B"
+    year: 2024
+    volume: 856
+    pages: 138949
+    doi: 10.1016/j.physletb.2024.138949
+
+  - type: article
+    authors:
+      - family-names: Ghosh
+        given-names: Anupam
+      - family-names: Konar
+        given-names: Partha
+      - family-names: Samui
+        given-names: Tousik
+      - family-names: Singh
+        given-names: Ritesh K.
+    title: "Jet substructure probe on scalar leptoquark models via top polarization"
+    journal: "Journal of High Energy Physics"
+    year: 2025
+    volume: 7
+    pages: 145
+    doi: 10.1007/JHEP07(2025)145
+
